@@ -1,5 +1,5 @@
 ## 概要
-このリポジトリは、Rust + Bevyで URLからgifファイルをSprite化して動かすツールのリポジトリになります。
+このリポジトリは、Rust + Bevyで URLからgifファイルを動かすツールのリポジトリになります。
 ![bbb](https://github.com/user-attachments/assets/924af331-394b-4880-986d-fe4604a2502f)
 
 
