@@ -16,13 +16,16 @@ cargo run --release
 * 設定ウィンドウの＋ボタンを押して項目を追加する
 * urlをクリックしてモーダルにgifのURLを入力して、読み込みボタンを押す
 ### gif を編集する
-* gifが表示されたら　移動、スケール、delay, x-flipでgif ファイルを編集できます。
+* gifが表示されたら　移動、スケール、delay、x-flip でgifファイルを編集できます。
+
+　<img width="324" height="68" alt="image" src="https://github.com/user-attachments/assets/2a983f35-002f-409d-bad7-0293d028ac54" />
+
 ### gif を削除
 * -ボタンを押すと項目ごとgifを削除します
 ### 設定ウィンドウの表示、非表示
-Escキー
+Esc キー
 ### ウィンドウのデコレーションを非表示にして、背景色を透明にする
-F12キー
+F12 キー
 
 ## 動作確認
 Windows 11
