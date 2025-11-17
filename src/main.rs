@@ -41,7 +41,6 @@ fn main() {
                 asset::update_transform,
                 asset::update_flip_x,
                 asset::update_menu,
-                asset::update_background,
                 asset::update_window,
             )
         )

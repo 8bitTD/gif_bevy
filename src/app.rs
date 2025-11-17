@@ -19,17 +19,10 @@ impl Default for MyApp{
 }
 impl MyApp{
     pub fn load_gif(&mut self, current_usize: usize, unique_id: usize){
-        let image_infos = gif_file::get_gif(&self.json.gif_jsons[current_usize].url, &mut self.gui.unique_sprite_id);
+        let gif_atlas = gif_file::get_gif(&self.json.gif_jsons[current_usize].url, &mut self.gui.unique_sprite_id);
         let mut gif_info = gif_file::GifInfo::default();
         gif_info.unique_id = unique_id;
-        for (gi, g) in image_infos.iter().enumerate(){
-            if gi == image_infos.len(){continue;}
-            if gi == 0{
-                gif_info.width = g.image.size().x as f32;
-                gif_info.height = g.image.size().y as f32;
-            }
-        }
-        gif_info.image_infos = image_infos;
+        gif_info.gif_atlas = gif_atlas;
         self.gui.gif_info[current_usize] = gif_info;
         if self.gui.state == State::Idle{
             self.gui.state = State::Spawn;
@@ -100,11 +93,11 @@ pub enum State{
 #[derive(Debug, Deserialize, Serialize, Clone)] 
 pub struct GifJson {
     pub url: String,
-    pub delay: f32,
     pub pos_x: f32,
     pub pos_y: f32,
     pub pos_z: f32,
     pub scale: f32,
+    pub speed: f32,
     pub flip_x: bool,
     pub unique_id: usize,
 }
@@ -112,11 +105,11 @@ impl Default for GifJson{
     fn default() -> Self{
         GifJson {
             url: String::new(),
-            delay: 1.0,
             pos_x: 0.0,
             pos_y: 0.0,
             pos_z: 0.0,
             scale: 1.0,
+            speed: 1.0,
             flip_x: false,
             unique_id: 0,
         }

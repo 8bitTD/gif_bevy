@@ -34,7 +34,7 @@ pub fn ui_system (
     egui::Window::new("設定").open(&mut is_show_menu).constrain(false).max_width(200.0).default_pos(egui::Pos2::new(0.0,0.0)).show(contexts.ctx_mut()?, |ui| {
         for (u, g) in app.json.gif_jsons.iter_mut().enumerate(){
             ui.horizontal(|ui|{
-                let res = ui.button("url").on_hover_text(&g.url);
+                let res = ui.button("URL").on_hover_text(&g.url);
                 if res.clicked(){ 
                     is_open_modal = true; 
                     current_unique_id = g.unique_id;
@@ -52,10 +52,10 @@ pub fn ui_system (
                 if ui.add(egui::DragValue::new(&mut g.pos_z).range(0.0..=1000.00).speed(5.00)).on_hover_text("pos_z").hovered(){
                     hover_unique_id = Some(g.unique_id);
                 }
-                if ui.add(egui::DragValue::new(&mut g.scale).range(0.10..=20.00).speed(0.025)).on_hover_text("scale").hovered(){
+                if ui.add(egui::DragValue::new(&mut g.scale).range(0.001..=20.00).speed(0.025)).on_hover_text("scale").hovered(){
                     hover_unique_id = Some(g.unique_id);
                 }
-                if ui.add(egui::DragValue::new(&mut g.delay).range(0.10..=5.00).speed(0.025)).on_hover_text("delay").hovered(){
+                if ui.add(egui::DragValue::new(&mut g.speed).range(0.10..=5.00).speed(0.025)).on_hover_text("speed").hovered(){
                     hover_unique_id = Some(g.unique_id);
                 }
                 if ui.checkbox(&mut g.flip_x,"").on_hover_text("x_flip").hovered(){

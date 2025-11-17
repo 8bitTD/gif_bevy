@@ -4,17 +4,15 @@ use super::gif_file;
 
 #[derive(Component)]
 pub struct SpriteInfo{
-    pub frame: usize,
-    pub delay: f32,
+    pub first: usize,
+    pub last: usize,
+    pub current_index: usize,
+    pub timer: f32,
+    pub delays: Vec<f32>,
     pub unique_id: usize,
 }
 #[derive(Component)]
 pub struct ParentInfo{
-    pub unique_id: usize,
-}
-
-#[derive(Component)]
-pub struct BackgroundInfo{
     pub unique_id: usize,
 }
 
@@ -55,47 +53,33 @@ pub fn init_spawn(
     mut app: ResMut<app::MyApp>,
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ){
     if app.gui.state != app::State::InitSpawn{return;}
     let all_num = app.gui.gif_info.len();
     for u in 0..all_num{
         let mut tmp_id = 0;
-        let image_infos = gif_file::get_gif(&app.json.gif_jsons[u].url, &mut tmp_id);
+        let gif_atlas = gif_file::get_gif(&app.json.gif_jsons[u].url, &mut tmp_id);
         let mut gif_info = gif_file::GifInfo::default();
         gif_info.unique_id = app.gui.gif_info[u].unique_id;
-        let mut tmp_images = Vec::new();
-        let mut frames = Vec::new();
-        for (gi, g) in image_infos.iter().enumerate(){
-            if gi == image_infos.len(){continue;}
-            tmp_images.push(g.clone());
-            frames.push(gi);
-            if gi == 0{
-                gif_info.width = g.image.size().x as f32;
-                gif_info.height = g.image.size().y as f32;
-            }
-        }
-        gif_info.image_infos = image_infos;
+  
+        gif_info.gif_atlas = gif_atlas;
         app.gui.gif_info[u] = gif_info;
         gif_file::spawn_gif(
-            &mut commands, &mut images, &mut meshes, &mut materials, app.gui.gif_info[u].unique_id, 
-            app.gui.gif_info[u].width, app.gui.gif_info[u].height, app.gui.gif_info[u].image_infos.clone()
+            &mut commands, &mut images, &mut texture_atlas_layouts, app.gui.gif_info[u].clone()
         );
     }
     app.gui.current_usize = 0;
     app.gui.state = app::State::Idle;
-
 }
 
 pub fn spawn_asset(
     mut commands: Commands,
     mut app: ResMut<app::MyApp>,
     mut images: ResMut<Assets<Image>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut parents: Query<(Entity, &ParentInfo)>,
     mut sprites: Query<(Entity, &SpriteInfo)>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     if app.gui.state != app::State::Spawn {return;}
     for (entity, pi) in parents.iter_mut(){
@@ -107,39 +91,38 @@ pub fn spawn_asset(
         commands.entity(entity).despawn();
     }
     gif_file::spawn_gif(
-        &mut commands, &mut images, &mut meshes, &mut materials, app.gui.current_unique_id, app.gui.gif_info[app.gui.current_usize].width, 
-        app.gui.gif_info[app.gui.current_usize].height, app.gui.gif_info[app.gui.current_usize].image_infos.clone()
+        &mut commands, &mut images, &mut texture_atlas_layouts, app.gui.gif_info[app.gui.current_usize].clone()
     );
     app.gui.state = app::State::Idle;
 }
 
 pub fn update_gif(//Gifアニメーション処理
-    mut app: ResMut<app::MyApp>,
+    app: Res<app::MyApp>,
     time: Res<Time>,
-    mut sprites: Query<(&mut SpriteInfo, &mut Visibility) ,Without<ParentInfo>>,
+    mut sprites: Query<(&mut SpriteInfo, &mut Sprite)>,
 ){
     if app.gui.state != app::State::Idle || app.gui.gif_info.is_empty() || app.json.gif_jsons.is_empty(){return;}
-    let dt = time.delta_secs();
-    let gif_jsons = app.json.gif_jsons.clone();
-    for (u, gi) in app.gui.gif_info.iter_mut().enumerate(){
-        gi.gif_delay += dt * gif_jsons[u].delay;
-    }
-    for (si,mut _v) in sprites.iter_mut(){
-        if let Some(u) = app.gui.gif_info.iter().position(|g|g.unique_id == si.unique_id){
-            if si.delay <= app.gui.gif_info[u].gif_delay{
-                app.gui.gif_info[u].gif_delay = app.gui.gif_info[u].gif_delay - si.delay;
-                app.gui.gif_info[u].gif_frame += 1;
-                if app.gui.gif_info[u].gif_frame == app.gui.gif_info[u].image_infos.len(){
-                    app.gui.gif_info[u].gif_frame = 0;
-                }
+    for (mut si, mut s) in &mut sprites{
+        if app.json.gif_jsons.iter().position(|g|g.unique_id == si.unique_id).is_none(){continue;}
+        if let Some(atlas) = &mut s.texture_atlas{
+            let u = app.json.gif_jsons.iter().position(|g|g.unique_id == si.unique_id).unwrap();
+            si.timer += time.delta_secs() * app.json.gif_jsons[u].speed;
+            let target_time = si.delays[si.current_index];
+            if si.timer >= target_time{
+                si.timer = si.timer - target_time;
+                atlas.index = match atlas.index == si.last{
+                    true => si.first,
+                    _ =>    atlas.index + 1
+                };
             }
         }
-    } 
-    for (si,mut v) in sprites.iter_mut(){
-        if let Some(u) = app.gui.gif_info.iter().position(|g|g.unique_id == si.unique_id){
-            match app.gui.gif_info[u].gif_frame == si.frame{
-                true => *v = Visibility::Visible,
-                _ =>    *v = Visibility::Hidden,
+        if app.gui.hover_unique_id.is_none() || !app.gui.is_show_menu || !app.gui.is_show_window{
+            s.color = Color::WHITE;
+        }else{
+            let id = app.gui.hover_unique_id.unwrap();
+            match id == si.unique_id{
+                true => { s.color = Color::srgba(0.25,0.75,1.0, 1.0); },
+                _ =>    { s.color = Color::WHITE; },
             };
         }
     }
@@ -168,25 +151,6 @@ pub fn update_flip_x(
         let uid = si.unique_id;
         if let Some(u) = app.json.gif_jsons.iter().position(|gf|gf.unique_id == uid){
             s.flip_x = app.json.gif_jsons[u].flip_x;
-        }
-    }
-}
-
-pub fn update_background(
-    app: Res<app::MyApp>,
-    mut bgs: Query<(&mut BackgroundInfo, &mut Visibility)>,
-){
-    if app.gui.state != app::State::Idle || app.gui.gif_info.is_empty() || app.json.gif_jsons.is_empty(){return;}
-    if app.gui.hover_unique_id.is_none() || !app.gui.is_show_window{
-        for (_, mut v) in bgs.iter_mut(){
-            *v = Visibility::Hidden;
-        }
-    }else{
-        for (b, mut v) in bgs.iter_mut(){
-            match b.unique_id == app.gui.hover_unique_id.unwrap(){
-                true => *v = Visibility::Visible,
-                _ =>    *v = Visibility::Hidden,
-            };
         }
     }
 }
