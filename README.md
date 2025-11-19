@@ -29,3 +29,6 @@ F12 キー
 
 ## 動作確認
 Windows 11
+
+## クレジット
+https://icons8.jp/icons/
