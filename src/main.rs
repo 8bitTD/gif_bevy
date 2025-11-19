@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 use bevy::{
     prelude::*,
     window::*,
@@ -23,6 +23,7 @@ fn main() {
                 transparent: true,
                 window_level: WindowLevel::Normal,
                 present_mode: PresentMode::AutoNoVsync,
+                prevent_default_event_handling: false,
                  ..default()
             }),
             exit_condition: bevy::window::ExitCondition::OnAllClosed,
@@ -36,6 +37,7 @@ fn main() {
         .add_systems(PreUpdate,asset::init_spawn)
         .add_systems(Update,
             (
+                asset::set_window_icon,
                 asset::spawn_asset,
                 asset::update_gif,
                 asset::update_transform,
@@ -44,7 +46,11 @@ fn main() {
                 asset::update_window,
             )
         )
-        .add_systems(PostUpdate, asset::delete_asset)
+        .add_systems(PostUpdate, 
+            (
+                asset::delete_asset, 
+            )
+        )
         .add_systems(Last,exec_exit)
         .run();
 }

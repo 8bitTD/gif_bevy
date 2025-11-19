@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+
+use super::define::*;
+
 use super::app;
 use super::gif_file;
 
@@ -18,11 +21,21 @@ pub struct ParentInfo{
 
 pub fn setup_asset(
     mut commands: Commands,
+    _winit_windows: Option<NonSend<bevy::winit::WinitWindows>>, 
 ) {
     commands.spawn((
         Camera2d::default(),
     ));
+    let icon = load_icon_from_url(common::ICONURL);
+    bevy::winit::WINIT_WINDOWS.with_borrow_mut(|winit_windows| {
+        if winit_windows.windows.is_empty(){return;}
+        for window in winit_windows.windows.values(){
+            println!("{:?}", window);
+            window.set_window_icon(icon.clone());
+        }
+    });
 }
+
 
 pub fn delete_asset(
     mut commands: Commands,
@@ -116,7 +129,7 @@ pub fn update_gif(//Gifアニメーション処理
                 };
             }
         }
-        if app.gui.hover_unique_id.is_none() || !app.gui.is_show_menu || !app.gui.is_show_window{
+        if app.gui.hover_unique_id.is_none() || !app.json.setting_info.is_show_setting_window || !app.gui.is_show_window{
             s.color = Color::WHITE;
         }else{
             let id = app.gui.hover_unique_id.unwrap();
@@ -160,7 +173,7 @@ pub fn update_menu(
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ){
     if keyboard_input.just_released(KeyCode::Escape) {
-        app.gui.is_show_menu = !app.gui.is_show_menu;
+        app.json.setting_info.is_show_setting_window = !app.json.setting_info.is_show_setting_window;
     }
 }
 
@@ -179,4 +192,31 @@ pub fn update_window(
         true => clear_color.0 = Color::srgba(0.2, 0.2, 0.2, 1.0),
         _ =>    clear_color.0 = Color::srgba(0.0, 0.0, 0.0, 0.0),
     };
+}
+
+pub fn set_window_icon(
+    mut app: ResMut<app::MyApp>,
+    windows: Option<NonSend<bevy::winit::WinitWindows>>,
+) {
+    if app.gui.is_set_window_icon {return}
+    if windows.is_none(){return}
+    let icon= load_icon_from_url(common::ICONURL);
+    for window in windows.unwrap().windows.values() {
+        window.set_window_icon(icon.clone());
+    }
+    println!("{:?}", "set_window_icon!");
+    app.gui.is_set_window_icon = true;
+}
+
+fn load_icon_from_url(url: &str) -> Option<winit::window::Icon>{
+    let Ok(response) = reqwest::blocking::get(url) else {return None};
+    let bytes = response.bytes().unwrap();
+    let Ok(img) = image::ImageReader::new(std::io::Cursor::new(bytes))
+        .with_guessed_format() else {return None};
+    let Ok(dyim) = img.decode() else {return None};
+    let pixels = dyim.as_bytes().to_vec();
+    let width = dyim.width();
+    let height = dyim.height();
+    let Ok(ico) = winit::window::Icon::from_rgba(pixels, width, height) else {return None};
+    return Some(ico); 
 }

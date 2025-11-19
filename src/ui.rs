@@ -1,13 +1,12 @@
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
-
 use super::app;
 use super::gif_file;
 
 pub fn ui_system (
     mut contexts: EguiContexts, 
     mut app: ResMut<app::MyApp>, 
-    mut windows: Query<&mut Window>
+    mut windows: Query<&mut Window>,
 ) -> Result{
     if !app.gui.is_show_window{return Ok(())}
     if app.gui.state != app::State::Idle {return Ok(());}
@@ -22,16 +21,20 @@ pub fn ui_system (
         if let Ok(context) = contexts.ctx_mut(){
             context.set_fonts(txt_font);
         }
+        
         app.gui.is_init_ui = false;
     }
+
     let mut is_open_modal = app.gui.is_open_modal;
     let mut current_unique_id = app.gui.current_unique_id;
     let mut current_usize = app.gui.current_usize;
     let mut gj = None;
     let mut rm = None;
     let mut hover_unique_id = None;
-    let mut is_show_menu = app.gui.is_show_menu;
-    egui::Window::new("設定").open(&mut is_show_menu).constrain(false).max_width(200.0).default_pos(egui::Pos2::new(0.0,0.0)).show(contexts.ctx_mut()?, |ui| {
+    let mut is_show_setting_window = app.json.setting_info.is_show_setting_window;
+    if let Some(win_res) = egui::Window::new("設定").open(&mut is_show_setting_window)
+        .collapsible(true).title_bar(true).constrain(true).max_width(200.0)
+        .default_rect(app.json.setting_info.rect()).show(contexts.ctx_mut()?, |ui| {
         for (u, g) in app.json.gif_jsons.iter_mut().enumerate(){
             ui.horizontal(|ui|{
                 let res = ui.button("URL").on_hover_text(&g.url);
@@ -75,7 +78,8 @@ pub fn ui_system (
                 gj = Some(app::GifJson::new(app.gui.unique_gif_id));                
             }
         });
-    });
+    }){ app.json.setting_info.set_rect(win_res.response.interact_rect); }
+ 
     if gj.is_some(){ 
         let tmp_gj = gj.unwrap();
         let mut gi = gif_file::GifInfo::default();
@@ -117,6 +121,6 @@ pub fn ui_system (
     app.gui.is_open_modal = is_open_modal;
     app.gui.current_unique_id = current_unique_id;
     app.gui.hover_unique_id = hover_unique_id;
-    app.gui.is_show_menu = is_show_menu;
+    app.json.setting_info.is_show_setting_window = is_show_setting_window;
     Ok(())
 }

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
+use bevy_egui::egui;
 use std::io::prelude::*;
 use super::define::*;
 use super::gif_file;
@@ -33,6 +34,7 @@ impl MyApp{
 #[derive(Debug)] 
 pub struct Gui {
     pub is_init_ui: bool,
+    pub is_set_window_icon: bool,
     pub gif_info: Vec<gif_file::GifInfo>,
     pub remove_unique_id: Option<usize>,
     pub current_usize: usize,
@@ -41,7 +43,6 @@ pub struct Gui {
     pub unique_sprite_id: usize,
     pub state: State,
     pub is_show_window: bool,
-    pub is_show_menu: bool,
     pub is_open_modal: bool,
     pub hover_unique_id: Option<usize>,
 }
@@ -49,7 +50,7 @@ impl Default for Gui{
     fn default() -> Self{
         Gui {
             is_init_ui: true,
-            is_show_menu: true,
+            is_set_window_icon: false,
             gif_info: vec![],
             remove_unique_id: None,
             current_usize: 0,
@@ -127,12 +128,14 @@ impl GifJson{
 pub struct Json {
     pub gif_jsons: Vec<GifJson>,
     pub window_info: WindowInfo,
+    pub setting_info: SettingInfo,
 }
 impl Default for Json{
     fn default() -> Self{
         Json {
             gif_jsons: Vec::new(),
             window_info: WindowInfo::default(),
+            setting_info: SettingInfo::default(),
         }
     }
 }
@@ -194,5 +197,38 @@ impl Default for WindowInfo{
             width: 900, 
             height: 600 
         }
+    }
+}
+#[derive(Debug, Deserialize, Serialize)] 
+pub struct SettingInfo {
+    pub left: f32,
+    pub top: f32,
+    pub right: f32,
+    pub bottom: f32,
+    pub is_show_setting_window: bool,
+}
+impl Default for SettingInfo{
+    fn default() -> SettingInfo{
+        SettingInfo { 
+            left: 0.0, 
+            top: 0.0, 
+            right: 0.0,
+            bottom: 0.0,
+            is_show_setting_window: true,
+        }
+    }
+}
+impl SettingInfo{
+    pub fn rect(&self) -> egui::Rect{
+        egui::Rect{
+            min: egui::Pos2::new(self.left, self.top),
+            max: egui::Pos2::new(self.right, self.bottom),
+        }
+    }
+    pub fn set_rect(&mut self, rect: egui::Rect){
+        self.top = rect.top();
+        self.left = rect.left();
+        self.right = rect.right();
+        self.bottom = rect.bottom();
     }
 }
