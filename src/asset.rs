@@ -21,7 +21,7 @@ pub struct ParentInfo{
 
 pub fn setup_asset(
     mut commands: Commands,
-    _winit_windows: Option<NonSend<bevy::winit::WinitWindows>>, 
+    _: bevy::ecs::system::NonSendMarker, 
 ) {
     commands.spawn((
         Camera2d::default(),
