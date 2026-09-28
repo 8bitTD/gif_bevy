@@ -24,6 +24,7 @@ fn main() {
                 window_level: WindowLevel::Normal,
                 present_mode: PresentMode::AutoNoVsync,
                 prevent_default_event_handling: false,
+                composite_alpha_mode: CompositeAlphaMode::PreMultiplied,
                  ..default()
             }),
             exit_condition: bevy::window::ExitCondition::OnAllClosed,
