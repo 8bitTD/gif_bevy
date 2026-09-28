@@ -18,13 +18,19 @@ pub fn ui_system (
         txt_font.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "Meiryo".to_owned());
         let fd = egui::FontData::from_static(include_bytes!("C:/Windows/Fonts/Meiryo.ttc"));
         txt_font.font_data.insert("Meiryo".to_owned(), std::sync::Arc::new(fd));
+        let text_styles: std::collections::BTreeMap<egui::TextStyle, egui::FontId> = [
+            (egui::TextStyle::Heading, egui::FontId::new(12.0, egui::FontFamily::Proportional)),
+            (egui::TextStyle::Body, egui::FontId::new(12.0, egui::FontFamily::Proportional)),
+            (egui::TextStyle::Monospace, egui::FontId::new(12.0, egui::FontFamily::Proportional)),
+            (egui::TextStyle::Button, egui::FontId::new(12.0, egui::FontFamily::Proportional)),
+            (egui::TextStyle::Small, egui::FontId::new(12.0, egui::FontFamily::Proportional)),
+        ].into();
         if let Ok(context) = contexts.ctx_mut(){
             context.set_fonts(txt_font);
+            context.all_styles_mut( | style| style.text_styles = text_styles.clone());
         }
-        
         app.gui.is_init_ui = false;
     }
-
     let mut is_open_modal = app.gui.is_open_modal;
     let mut current_unique_id = app.gui.current_unique_id;
     let mut current_usize = app.gui.current_usize;
@@ -33,7 +39,7 @@ pub fn ui_system (
     let mut hover_unique_id = None;
     let mut is_show_setting_window = app.json.setting_info.is_show_setting_window;
     if let Some(win_res) = egui::Window::new("設定").open(&mut is_show_setting_window)
-        .collapsible(true).title_bar(true).constrain(true).max_width(200.0)
+        .collapsible(true).title_bar(true).constrain(true).auto_sized()
         .default_rect(app.json.setting_info.rect()).show(contexts.ctx_mut()?, |ui| {
         for (u, g) in app.json.gif_jsons.iter_mut().enumerate(){
             ui.horizontal(|ui|{
